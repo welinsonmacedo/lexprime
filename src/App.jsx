@@ -16,13 +16,7 @@ const Nav = styled.nav`
 `;
 
 export default function App() {
-  // usuário admin "falso" direto
-  const [advogado] = useState({
-    id: "1df58b25-5f3b-450e-9e17-ec0064b68476",
-    nome: "Admin Principal",
-    email: "admin@lexprime.com",
-    role: "advogado",
-  });
+  
 
   return (
     <>
@@ -35,16 +29,15 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         
-        {/* Painel do Admin direto */}
+      
         <Route
           path="/admin"
-          element={<AdminDashboard user={advogado} />}
+          element={<AdminDashboard  />}
         />
 
-        {/* Login do cliente via chave */}
         <Route path="/client" element={<ClientLogin />} />
 
-        {/* Portal do cliente via chave */}
+     
         <Route path="/client/:key" element={<ClientPortal />} />
       </Routes>
     </>
