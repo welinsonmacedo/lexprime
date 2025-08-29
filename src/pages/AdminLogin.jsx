@@ -26,46 +26,39 @@ export default function AdminLogin({ onLogin }) {
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const handleLogin = async () => {
-    if (!email || !senha) {
-      setError("Preencha email e senha");
+const handleLogin = async () => {
+  if (!email || !senha) {
+    setError("Preencha email e senha");
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: senha.trim(),
+    });
+
+    if (error) {
+      setError("Email ou senha inválidos");
       return;
     }
-  
-    try {
-      const { data: users, error } = await supabase
-        .from("users")
-        .select("*")
-        .ilike("email", email.trim())
-        .eq("senha", senha.trim());
-  
-      if (error) {
-        setError("Erro ao consultar o banco");
-        return;
-      }
-  
-      if (!users || users.length === 0) {
-        setError("Email ou senha inválidos");
-        return;
-      }
-  
-      const user = users[0];
-  
-      // VERIFICAR SE É ADMIN (advogado)
-      if (user.role !== "advogado") {
-        setError("Usuário não autorizado como admin");
-        return;
-      }
-  
-      // login válido
-      if (onLogin) onLogin(user);
-      navigate("/admin");
-  
-    } catch (err) {
-      console.error(err);
-      setError("Ocorreu um erro inesperado");
+
+    const user = data.user;
+
+    // VERIFICAR SE É ADMIN (advogado) - você precisa ter o role salvo em user_metadata
+    if (user.user_metadata.role !== "advogado") {
+      setError("Usuário não autorizado como admin");
+      return;
     }
-  };
+
+    if (onLogin) onLogin(user);
+    navigate("/admin");
+
+  } catch (err) {
+    console.error(err);
+    setError("Ocorreu um erro inesperado");
+  }
+};
 
   return (
     <Container>

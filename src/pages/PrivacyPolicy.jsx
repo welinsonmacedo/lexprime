@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import styled from "styled-components";
@@ -76,7 +76,7 @@ const Button = styled.button`
   border: none;
   cursor: pointer;
   font-weight: bold;
-  background-color: ${(props) => (props.$primary ? "#00b894" : "#d4af37")};
+  background-color: ${(props) => (props.primary ? "#00b894" : "#d4af37")};
   color: #000;
   &:hover {
     opacity: 0.8;
@@ -107,15 +107,6 @@ const LGPDModal = styled.div`
   color: #d4af37;
   padding: 20px;
   z-index: 1000;
-  overflow-y: auto;
-`;
-
-const LGPDModalContent = styled.div`
-  max-height: ${(props) => (props.expanded ? "70vh" : "150px")};
-  overflow-y: auto;
-  padding: 10px;
-  border: 1px solid #d4af37;
-  border-radius: 5px;
 `;
 
 export default function ClientPortal() {
@@ -128,67 +119,21 @@ export default function ClientPortal() {
   const [expandedProcesses, setExpandedProcesses] = useState({});
   const [showLGPD, setShowLGPD] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [expandedLGPD, setExpandedLGPD] = useState(false);
 
   const now = new Date();
   const saoPauloTime = new Date(
     now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
   );
 
-  // Carrega processos do cliente
-  async function loadProcesses(clientId) {
-    const { data: clientProcesses } = await supabase
-      .from("processes")
-      .select("*")
-      .eq("client_id", clientId);
-
-    if (clientProcesses?.length > 0) {
-      const processesWithUpdates = await Promise.all(
-        clientProcesses.map(async (proc) => {
-          const { data: updates } = await supabase
-            .from("process_updates")
-            .select("*")
-            .eq("process_id", proc.id)
-            .order("created_at", { ascending: true });
-          return { ...proc, updates: updates || [] };
-        })
-      );
-
-      setProcesses(processesWithUpdates);
-
-      const initialEdits = {};
-      const newNotifications = [];
-
-      processesWithUpdates.forEach((proc) => {
-        proc.updates.forEach((u) => {
-          initialEdits[u.id] = u.client_comment || "";
-          if (!u.seen_by_client) {
-            newNotifications.push({
-              processNumber: proc.numero,
-              processTitle: proc.titulo,
-              updateId: u.id,
-              description: u.descricao,
-              createdAt: u.created_at,
-            });
-          }
-        });
-      });
-
-      setCommentEdits(initialEdits);
-      setNotifications(newNotifications);
-    }
-  }
-
   useEffect(() => {
+    const accessKey = localStorage.getItem("client_access_key");
+    if (!accessKey) {
+      navigate("/login");
+      return;
+    }
+
     async function fetchData() {
       setLoading(true);
-
-      const accessKey = key || localStorage.getItem("client_access_key");
-      if (!accessKey) {
-        navigate("/login");
-        return;
-      }
-
       const { data: client } = await supabase
         .from("clients")
         .select("*")
@@ -201,7 +146,6 @@ export default function ClientPortal() {
       }
 
       setClientData(client);
-      localStorage.setItem("client_access_key", accessKey);
 
       if (!client.lgpd_accepted) {
         setShowLGPD(true);
@@ -209,7 +153,47 @@ export default function ClientPortal() {
         return;
       }
 
-      await loadProcesses(client.id);
+      const { data: clientProcesses } = await supabase
+        .from("processes")
+        .select("*")
+        .eq("client_id", client.id);
+
+      if (clientProcesses?.length > 0) {
+        const processesWithUpdates = await Promise.all(
+          clientProcesses.map(async (proc) => {
+            const { data: updates } = await supabase
+              .from("process_updates")
+              .select("*")
+              .eq("process_id", proc.id)
+              .order("created_at", { ascending: true });
+            return { ...proc, updates: updates || [] };
+          })
+        );
+
+        setProcesses(processesWithUpdates);
+
+        const initialEdits = {};
+        const newNotifications = [];
+
+        processesWithUpdates.forEach((proc) => {
+          proc.updates.forEach((u) => {
+            initialEdits[u.id] = u.client_comment || "";
+            if (!u.seen_by_client) {
+              newNotifications.push({
+                processNumber: proc.numero,
+                processTitle: proc.titulo,
+                updateId: u.id,
+                description: u.descricao,
+                createdAt: u.created_at,
+              });
+            }
+          });
+        });
+
+        setCommentEdits(initialEdits);
+        setNotifications(newNotifications);
+      }
+
       setLoading(false);
     }
 
@@ -225,30 +209,17 @@ export default function ClientPortal() {
 
     setClientData({ ...clientData, lgpd_accepted: true });
     setShowLGPD(false);
-
-    await loadProcesses(clientData.id);
   }
 
-  async function revokeLGPD() {
+  async function declineLGPD() {
     if (!clientData) return;
     await supabase.from("clients").update({
       lgpd_accepted: false
     }).eq("id", clientData.id);
 
-    setClientData({ ...clientData, lgpd_accepted: false });
-    setShowLGPD(true);
+    localStorage.removeItem("client_access_key");
+    navigate("/login");
   }
-
-  const closeLGPDModal = () => {
-  if (clientData?.lgpd_accepted) {
-    // Já aceitou → só fecha o modal, permanece no portal
-    setShowLGPD(false);
-  } else {
-    // Não aceitou → institucional
-    navigate("/");
-  }
-};
-
 
   async function markAsSeen(update) {
     await supabase
@@ -319,10 +290,8 @@ export default function ClientPortal() {
       <p>Telefone: {clientData.telefone}</p>
       <p>Email: {clientData.email}</p>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        <Button onClick={logout}>Logout</Button>
-        <Button onClick={() => setShowLGPD(true)}>Política de Privacidade</Button>
-      </div>
+      <Button onClick={logout}>Logout</Button>
+      <Button onClick={() => setShowLGPD(true)}>Ver Política de Privacidade</Button>
 
       {notifications.length > 0 && (
         <NotificationBar>
@@ -361,7 +330,7 @@ export default function ClientPortal() {
 
                     <ActionsWrapper>
                       {!update.seen_by_client && (
-                        <Button $primary onClick={() => markAsSeen(update)}>
+                        <Button primary onClick={() => markAsSeen(update)}>
                           Marcar como visto
                         </Button>
                       )}
@@ -386,27 +355,12 @@ export default function ClientPortal() {
       {showLGPD && (
         <LGPDModal>
           <h2>Política de Privacidade</h2>
-
-          <LGPDModalContent expanded={expandedLGPD}>
-            <p>1. Coleta de Dados: coletamos informações como nome, email e telefone.</p>
-            <p>2. Uso de Dados: dados usados apenas para fins administrativos.</p>
-            <p>3. Armazenamento e Segurança: armazenamos em servidores seguros.</p>
-            <p>4. Compartilhamento: não compartilhamos sem seu consentimento.</p>
-            <p>5. Consentimento: ao aceitar, você concorda com a coleta e uso.</p>
-          </LGPDModalContent>
-
-          <Button onClick={() => setExpandedLGPD(!expandedLGPD)}>
-            {expandedLGPD ? "Ver menos" : "Ler política"}
-          </Button>
-
-          <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
+          <p>Para acessar seus processos, é necessário aceitar nossa política de privacidade.</p>
+          <div>
             {!clientData.lgpd_accepted && (
-              <Button $primary onClick={acceptLGPD}>Aceitar</Button>
+              <Button primary onClick={acceptLGPD}>Aceitar</Button>
             )}
-            {clientData.lgpd_accepted && (
-              <Button onClick={revokeLGPD}>Revogar</Button>
-            )}
-            <Button onClick={closeLGPDModal}>Fechar</Button>
+            <Button onClick={declineLGPD}>Não aceitar / Sair</Button>
           </div>
         </LGPDModal>
       )}

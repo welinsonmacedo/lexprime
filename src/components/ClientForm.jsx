@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import AdminDashboard, { Input } from "../pages/admin/dashboard";
+import AdminDashboard from "../pages/admin/dashboard";
+import { Input, Button, AddButton } from "./FormComponents";
 
 export default function ClientForm({ refreshClients }) {
   const [name, setName] = useState("");
@@ -19,7 +20,7 @@ export default function ClientForm({ refreshClients }) {
       <Input placeholder="Nome" value={name} onChange={e => setName(e.target.value)} />
       <Input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
       <Input placeholder="Telefone" value={telefone} onChange={e => setTelefone(e.target.value)} />
-      <AdminDashboard onClick={addClient}>Adicionar Cliente</AdminDashboard>
+      <AddButton onClick={addClient}>Adicionar Cliente</AddButton>
     </div>
   );
   }
