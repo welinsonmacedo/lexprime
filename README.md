@@ -1,12 +1,27 @@
-# React + Vite
+📖 Lex Prime
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+O Lex Prime é uma plataforma jurídica inovadora que ajuda advogados a organizarem processos, gerirem clientes e acompanharem suas atividades de forma simples, rápida e segura.
 
-Currently, two official plugins are available:
+Este é um MVP (Produto Mínimo Viável) em fase de testes, desenvolvido para validar funcionalidades essenciais e abrir espaço para melhorias baseadas no feedback da comunidade jurídica.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+✨ Funcionalidades
 
-## Expanding the ESLint configuration
+📂 Gestão de Processos – organize e acompanhe processos jurídicos.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+👨‍💼 Portal do Cliente – seus clientes podem acessar informações de forma prática.
+
+🔑 Login Seguro – autenticação protegida para advogados e clientes.
+
+📊 Dashboard Inteligente – visão geral de prazos, clientes e processos.
+
+📅 Controle de Agenda – mantenha compromissos e audiências sempre organizados.
+
+🛠️ Tecnologias Utilizadas
+
+Frontend: React + Vite + Styled Components
+
+Backend/API: Node.js (Express)
+
+Banco de Dados: PostgreSQL / Supabase
+
+Deploy: Vercel
