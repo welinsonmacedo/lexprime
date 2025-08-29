@@ -271,28 +271,31 @@ export default function ClientPortal() {
   }
 
   async function sendComment(update) {
-    const comment = commentEdits[update.id];
-    if (!comment) return;
+     const comment = commentEdits[update.id];
+  if (!comment) return;
 
-    await supabase
-      .from("process_updates")
-      .update({
-        client_comment: comment,
-        client_comment_created_at: saoPauloTime,
-      })
-      .eq("id", update.id);
+  await supabase
+    .from("process_updates")
+    .update({
+      client_comment: comment,
+      client_comment_created_at: saoPauloTime,
+    })
+    .eq("id", update.id);
 
-    setProcesses((prev) =>
-      prev.map((p) => ({
-        ...p,
-        updates: p.updates.map((u) =>
-          u.id === update.id
-            ? { ...u, client_comment: comment, client_comment_created_at: new Date() }
-            : u
-        ),
-      }))
-    );
-  }
+  setProcesses((prev) =>
+    prev.map((p) => ({
+      ...p,
+      updates: p.updates.map((u) =>
+        u.id === update.id
+          ? { ...u, client_comment: comment, client_comment_created_at: new Date() }
+          : u
+      ),
+    }))
+  );
+
+  // Limpa o input após enviar
+  setCommentEdits((prev) => ({ ...prev, [update.id]: "" }));
+};
 
   const isEditable = (update) => {
     if (!update.client_comment_created_at) return true;

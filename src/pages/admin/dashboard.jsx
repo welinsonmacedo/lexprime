@@ -54,6 +54,23 @@ const Table = styled.table`
   th { background-color: #1f1f1f; }
 `;
 
+const Summary = styled.div`
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+`;
+
+const SummaryCard = styled.div`
+  background-color: #1f1f1f;
+  padding: 15px 20px;
+  border-radius: 10px;
+  border: 1px solid #d4af37;
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+`;
+
 export default function AdminDashboard({ user }) {
   if (!user) return null;
 
@@ -69,7 +86,7 @@ export default function AdminDashboard({ user }) {
 
   // --- fetch processos e updates quando mudar aba ---
   useEffect(() => {
-    if (activeTab === "processes") fetchProcesses();
+    if (activeTab === "processes" || activeTab === "updates") fetchProcesses();
   }, [activeTab]);
 
   async function fetchClients() {
@@ -104,9 +121,22 @@ export default function AdminDashboard({ user }) {
     }
   }
 
+  // --- resumo de status dos processos ---
+  const totalProcesses = processes.length;
+  const openProcesses = processes.filter(p => p.status !== "Fechado").length;
+  const closedProcesses = processes.filter(p => p.status === "Fechado").length;
+
   return (
     <Container>
       <Title>LEX-Prime {user.nome}</Title>
+
+      {totalProcesses > 0 && (
+        <Summary>
+          <SummaryCard>Total de Processos: {totalProcesses}</SummaryCard>
+          <SummaryCard>Abertos: {openProcesses}</SummaryCard>
+          <SummaryCard>Fechados: {closedProcesses}</SummaryCard>
+        </Summary>
+      )}
 
       <Tabs>
         <TabButton $active={activeTab==="clients"} onClick={()=>setActiveTab("clients")}>Clientes</TabButton>

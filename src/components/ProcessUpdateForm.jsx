@@ -101,15 +101,13 @@ export default function ProcessUpdateFormAdmin() {
   const addUpdate = async () => {
     if (!processId) return alert("Selecione um processo");
     const now = new Date();
-    await supabase
-      .from("process_updates")
-      .insert([
-        {
-          process_id: processId.value,
-          descricao,
-          created_at: now.toISOString(),
-        },
-      ]);
+    await supabase.from("process_updates").insert([
+      {
+        process_id: processId.value,
+        descricao,
+        created_at: now.toISOString(),
+      },
+    ]);
     setProcessId(null);
     setDescricao("");
     fetchData();
@@ -143,19 +141,64 @@ export default function ProcessUpdateFormAdmin() {
     const popup = window.open("", "_blank");
     popup.document.write(`
       <html>
-        <head>
-          <title>Linha do Tempo</title>
-          <style>
-            body { font-family: Arial; background: #1f1f1f; color: #d4af37; padding: 20px; }
-            pre { white-space: pre-wrap; }
-          </style>
-        </head>
-        <body>
-          <h2>Processo: ${proc.numero} - ${proc.titulo}</h2>
-          <h3>Cliente: ${clientName}</h3>
-          <pre>${timelineText}</pre>
-        </body>
-      </html>
+  <head>
+    <title>Linha do Tempo</title>
+    <style>
+      body { 
+        font-family: Arial, sans-serif; 
+        background: #1f1f1f; 
+        color: #d4af37; 
+        padding: 20px; 
+      }
+      h2, h3 {
+        color: #00b894;
+      }
+      .timeline {
+        position: relative;
+        margin: 30px 0;
+        padding: 0 20px;
+        border-left: 3px solid #d4af37;
+      }
+      .timeline-item {
+        position: relative;
+        margin-bottom: 25px;
+        padding-left: 30px;
+      }
+      .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: -11px;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        background: #00b894;
+        border: 3px solid #d4af37;
+        border-radius: 50%;
+      }
+      .timeline-item p {
+        margin: 0;
+        color: #bbb;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Processo: ${proc.numero} - ${proc.titulo}</h2>
+    <h3>Cliente: ${clientName}</h3>
+
+    <div class="timeline">
+      ${timelineText
+        .split("\n")
+        .map(line => `
+          <div class="timeline-item">
+            <p>${line}</p>
+          </div>
+        `)
+        .join("")}
+    </div>
+  </body>
+</html>
+
     `);
     popup.print();
   };
@@ -208,7 +251,7 @@ export default function ProcessUpdateFormAdmin() {
         value={processId}
         onChange={setProcessId}
         styles={{
-          control: (base) => ({ ...base, backgroundColor: "#b8adad" }),
+          control: (base) => ({ ...base, backgroundColor: "#fffcfc" }),
         }}
       />
       <Input
@@ -271,48 +314,69 @@ export default function ProcessUpdateFormAdmin() {
                   <div
                     style={{
                       display: "flex",
-                      alignItems: "center",
+                      flexDirection: "column",
                       gap: "5px",
                     }}
                   >
-                    {editing[update.id] ? (
-                      <>
-                        <Input
-                          value={editValues[update.id]}
-                          onChange={(e) =>
-                            setEditValues((prev) => ({
-                              ...prev,
-                              [update.id]: e.target.value,
-                            }))
-                          }
-                        />
-                        <FaSave
-                          style={{ cursor: "pointer" }}
-                          onClick={() => saveEdit(update.id)}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <span>
-                          <strong>
-                            {new Date(update.created_at).toLocaleString()}:
-                          </strong>{" "}
-                          {update.descricao}{" "}
-                          {update.seen_by_client && (
-                            <FaCheck
-                              title="Visualizado pelo cliente"
-                              style={{ color: "#00b894", marginLeft: "5px" }}
-                            />
-                          )}
-                        </span>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      {editing[update.id] ? (
+                        <>
+                          <Input
+                            value={editValues[update.id]}
+                            onChange={(e) =>
+                              setEditValues((prev) => ({
+                                ...prev,
+                                [update.id]: e.target.value,
+                              }))
+                            }
+                          />
+                          <FaSave
+                            style={{ cursor: "pointer" }}
+                            onClick={() => saveEdit(update.id)}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <span>
+                            <strong>
+                              {new Date(update.created_at).toLocaleString()}:
+                            </strong>{" "}
+                            {update.descricao}{" "}
+                            {update.seen_by_client && (
+                              <FaCheck
+                                title="Visualizado pelo cliente"
+                                style={{ color: "#00b894", marginLeft: "5px" }}
+                              />
+                            )}
+                          </span>
 
-                        <FaEdit
-                          style={{ cursor: "pointer", marginLeft: "5px" }}
-                          onClick={() =>
-                            startEditing(update.id, update.descricao)
-                          }
-                        />
-                      </>
+                          <FaEdit
+                            style={{ cursor: "pointer", marginLeft: "5px" }}
+                            onClick={() =>
+                              startEditing(update.id, update.descricao)
+                            }
+                          />
+                        </>
+                      )}
+                    </div>
+
+                  
+                    {update.client_comment && (
+                      <p
+                        style={{
+                          fontStyle: "italic",
+                          color: "#00b894",
+                          marginLeft: "20px",
+                        }}
+                      >
+                        {clientName} : {update.client_comment}
+                      </p>
                     )}
                   </div>
                 </TimelineItem>
